@@ -95,15 +95,15 @@ Results
 +==========================+=====+=====+=====+======+=======================+
 | caravel                  |     |     |     |      |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| caravel_clocking         | OK  | OK  |     |      |                       |
+| caravel_clocking         | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
 | chip_io                  |     |     |     |      |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| digital_pll              | OK  | OK  |     |      |                       |
+| digital_pll              | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| gpio_control_block       | OK  | OK  |     |      |                       |
+| gpio_control_block       | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| gpio_logic_high          | OK  | OK  |     |      |                       |
+| gpio_logic_high          | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
 | gpio_defaults_block      |     |     |     |      | no gds                |
 +--------------------------+-----+-----+-----+------+-----------------------+
@@ -111,27 +111,27 @@ Results
 +--------------------------+-----+-----+-----+------+-----------------------+
 | gpio_defaults_block_1803 |     |     |     |      | no config             |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| housekeeping             | OK? | OK  |     |      | offgrid               |
+| housekeeping             | OK? | OK  | OK  | OK   | offgrid               |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| mgmt_core_wrapper        |   |   |     |      | DFFRAM                |
+| mgmt_core_wrapper        | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| mgmt_core                |   |   |     |      |                       |
+| mgmt_core                | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| DFFRAM                   |  |   |     |      | met1 short            |
+| DFFRAM                   | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| mgmt_protect             |   |   |     |      | pins |
+| mgmt_protect             | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
 | mgmt_protect_hv          |     |     |     |      | no config             |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| mprj2_logic_high         | OK  | OK  |     |      |                       |
+| mprj2_logic_high         | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| mprj_logic_high          | OK  | OK  |     |      |                       |
+| mprj_logic_high          | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
 | simple_por               |     |     |     |      | no config, no netlist |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| spare_logic_block        | OK  | OK  |     |      |                       |
+| spare_logic_block        | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
-| user_id_programming      | OK  | OK  |     |      |                       |
+| user_id_programming      | OK  | OK  | OK  | OK   |                       |
 +--------------------------+-----+-----+-----+------+-----------------------+
 | user_project_wrapper     |     |     |     |      | no netlist            |
 +--------------------------+-----+-----+-----+------+-----------------------+
@@ -140,31 +140,22 @@ Results
 
 Everything after this line applies to the original mpw-one caravel. Update is pending.
 
-Here are the required additions to the config.tcl files::
+Here are the required additions to the caravel/openlane/*/config.tcl files::
 
  cat >> chip_io/config.tcl <<"+chip_io"
- 
+
  set ::env(LVS_EXTRA_STD_CELL_LIBRARY) "
        \$::env(PDK_ROOT)/\$::env(PDK)/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice
        \$::env(PDK_ROOT)/\$::env(PDK)/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice"
- 
+
  +chip_io
- 
+
  cat >> gpio_control_block/config.tcl <<"+gpio_control_block"
 
  set ::env(LVS_EXTRA_GATE_LEVEL_VERILOG) "
        $script_dir/../../verilog/gl/gpio_logic_high.v"
 
  +gpio_control_block
-
-
- cat >> mgmt_core/config.tcl <<"+mgmt_core"
-
- set ::env(LVS_EXTRA_GATE_LEVEL_VERILOG) "
-       $script_dir/../../verilog/gl/DFFRAM.v
-       $script_dir/../../verilog/gl/digital_pll.v"
-
- +mgmt_core
 
 
  cat >> mgmt_protect/config.tcl <<"+mgmt_protect"
@@ -179,6 +170,31 @@ Here are the required additions to the config.tcl files::
 
  +mgmt_protect
 
+Here are the required additions to the mgmt_wrapper/openlane/*/config.tcl files::
+
+ cat >> mgmt_core_wrapper/config.tcl <<"+mgmt_core_wrapper"
+
+ set ::env(LVS_EXTRA_GATE_LEVEL_VERILOG) "
+       $script_dir/../../verilog/gl/mgmt_core.v
+       $script_dir/../../verilog/gl/DFFRAM.v"
+
+ set ::env(MAGIC_GDS_FLATTEN_CELLS) "
+       {*_?mos_m*}"
+
+ set ::env(LVS_EXTRA_SPICE) "
+         $::env(PDK_ROOT)/sky130A/libs.ref/sky130_sram_macros/spice/sky130_sram_2kbyte_1rw1r_32x512_8.spice"
+
+ +mgmt_core_wrapper
+
+ cat >> mgmt_core/config.tcl <<"+mgmt_core"
+
+ set ::env(MAGIC_GDS_FLATTEN_CELLS) "
+       {*_?mos_m*}"
+
+ set ::env(LVS_EXTRA_SPICE) "
+         $::env(PDK_ROOT)/sky130A/libs.ref/sky130_sram_macros/spice/sky130_sram_2kbyte_1rw1r_32x512_8.spice"
+
+ +mgmt_core
 
 chip_io
 =======
